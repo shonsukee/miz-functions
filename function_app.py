@@ -4,6 +4,7 @@ from azure.storage.blob import BlobServiceClient
 import csv
 import io
 import os
+import json
 
 def main(event: func.EventHubEvent):
     logging.info('Received event from IoT Hub')
@@ -13,7 +14,7 @@ def main(event: func.EventHubEvent):
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
 
     # Blobコンテナ名とBlob名の指定
-    container_name = os.getenv("AzureBlobStorageName")
+    container_name = os.getenv("AzureContainerName")
     blob_name = f"event-data-{event.sequence_number}.csv"
 
     # イベントデータをJSON形式で取得
@@ -32,7 +33,10 @@ def main(event: func.EventHubEvent):
     # Blobコンテナのクライアント取得
     blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
 
-    # メモリ上のCSVデータをBlobにアップロード
-    blob_client.upload_blob(output.getvalue(), overwrite=True)
+    try:
+        # メモリ上のCSVデータをBlobにアップロード
+        blob_client.upload_blob(output.getvalue(), overwrite=True)
+        logging.info(f"Data saved to Blob Storage in CSV format: {blob_name}")
+    except Exception as e:
+        logging.error(f"Failed to upload data to Blob Storage: {str(e)}")
 
-    logging.info(f"Data saved to Blob Storage in CSV format: {blob_name}")

@@ -24,11 +24,15 @@ def main(event: func.EventHubEvent):
     output = io.StringIO()
     csv_writer = csv.writer(output)
 
-    # ここではJSONのキーに基づいてヘッダとデータを書き込む例
-    json_data = json.loads(event_data)
-    header = json_data.keys()
-    csv_writer.writerow(header)
-    csv_writer.writerow(json_data.values())
+    # JSONのキーに基づいてヘッダとデータを書き込む
+    try:
+        json_data = json.loads(event_data)
+        header = json_data.keys()
+        csv_writer.writerow(header)
+        csv_writer.writerow(json_data.values())
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to parse JSON data: {str(e)}")
+        return
 
     # Blobコンテナのクライアント取得
     blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)

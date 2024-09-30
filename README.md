@@ -3,7 +3,7 @@ miz-functions is a Python code for Azure Functions. The code is triggered when t
 
 
 ## Usage
-- Set up credential information etc. with reference to `.env.example`.
+- Create `local.settings.json` and set credential informations.
 - If you want to check the detailed log, add the following code to the file and run it.
 	- `logging.basicConfig(filename='./data/debug.log', level=logging.DEBUG)`
 - If you want to try running locally, add the mock code to the bottom of `function_app.py` and run it.

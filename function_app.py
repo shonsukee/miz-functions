@@ -26,24 +26,47 @@ def main(event: func.EventHubEvent):
     # JSONのキーに基づいてヘッダとデータを書き込む
     try:
         json_data = json.loads(event_data)
-        header = json_data.keys()
-        csv_writer.writerow(header)
-        csv_writer.writerow(json_data.values())
+
+        if isinstance(json_data, list) and len(json_data) > 0:
+            machine_id = json_data[0].get("machineID", "unknown")
+            timestamp = json_data[0].get("timestamp", "unknown").replace(":", "-")
+
+            # machineIDを削除
+            for data_point in json_data:
+                data_point.pop("machineID", None)
+
+            # 各データポイントをCSVとして書き込む
+            header = json_data[0].keys()
+            csv_writer.writerow(header)
+
+            for data_point in json_data:
+                csv_writer.writerow(data_point.values())
     except json.JSONDecodeError as e:
         logging.error(f"Failed to parse JSON data: {str(e)}")
         return
+    finally:
+        # メモリを解放
+        output.seek(0)
 
 
     # Blob Storageへの接続設定
     connection_string = os.getenv("AzureWebJobsStorage")
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-    container_name = os.getenv("AzureContainerName")
-    blob_name = f"event-data-{event.sequence_number}.csv"
-    blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+    container_name = f"machine-{machine_id.lower()}-container"
+    blob_name = f"{machine_id}_{timestamp}.csv"
 
     try:
+        # コンテナが存在しない場合は作成
+        container_client = blob_service_client.get_container_client(container_name)
+        if not container_client.exists():
+            container_client.create_container()
+
+        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
+
         # メモリ上のCSVデータをBlobにアップロード
         blob_client.upload_blob(output.getvalue(), overwrite=True)
         logging.info(f"Data saved to Blob Storage in CSV format: {blob_name}")
     except Exception as e:
         logging.error(f"Failed to upload data to Blob Storage: {str(e)}")
+    finally:
+        output.close()

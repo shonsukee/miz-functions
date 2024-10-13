@@ -49,8 +49,8 @@ def main(event: func.EventHubEvent):
         # メモリを解放
         output.seek(0)
 
-	# 現在のUTC日付
-    current_date = datetime.datetime.now()
+    # 現在のUTC日付
+    current_date = datetime.now()
     year = current_date.year
     month = current_date.month
     day = current_date.day
@@ -58,8 +58,8 @@ def main(event: func.EventHubEvent):
     # Blob Storageへの接続設定
     connection_string = os.getenv("AzureWebJobsStorage")
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-    container_name = f"machine-{machine_id.lower()}-container"
-	blob_name = f"{year}/{month}/{day}/{machine_id}_{timestamp}.csv"
+    container_name = f"miz-container"
+    blob_name = f"{year}/{month:02d}/{day:02d}/machine-{machine_id.lower()}-data/{machine_id}_{timestamp}.csv"
 
     try:
         # コンテナが存在しない場合は作成

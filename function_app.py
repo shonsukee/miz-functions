@@ -5,6 +5,7 @@ import csv
 import io
 import os
 import json
+from datetime import datetime
 
 app = func.FunctionApp()
 
@@ -48,12 +49,17 @@ def main(event: func.EventHubEvent):
         # メモリを解放
         output.seek(0)
 
+	# 現在のUTC日付
+    current_date = datetime.datetime.now()
+    year = current_date.year
+    month = current_date.month
+    day = current_date.day
 
     # Blob Storageへの接続設定
     connection_string = os.getenv("AzureWebJobsStorage")
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
     container_name = f"machine-{machine_id.lower()}-container"
-    blob_name = f"{machine_id}_{timestamp}.csv"
+	blob_name = f"{year}/{month}/{day}/{machine_id}_{timestamp}.csv"
 
     try:
         # コンテナが存在しない場合は作成

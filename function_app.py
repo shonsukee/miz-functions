@@ -15,8 +15,6 @@ app = func.FunctionApp()
                                connection=os.getenv("CONNECTION_STRING"),
                                consumer_group="$Default")
 def main(event: func.EventHubEvent):
-    logging.info('Received event from IoT Hub')
-
     # イベントデータをJSON形式で取得
     event_data = event.get_body().decode('utf-8')
 
